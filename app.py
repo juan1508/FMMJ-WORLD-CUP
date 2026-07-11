@@ -38,9 +38,33 @@ st.markdown(f"""
 .pres-Dibu {{ border-left-color: {RED} !important; }}
 .group-title {{ background: linear-gradient(90deg, {GREEN}, {BLUE}, {RED}); padding: 6px 14px; border-radius: 8px; color: white; font-weight: 700; display:inline-block; margin-bottom: 8px; }}
 .stage-banner {{ background: linear-gradient(90deg, {RED}, {GOLD}, {BLUE}); color:white; padding:10px 16px; border-radius:10px; font-weight:700; margin: 10px 0; }}
+.flag-ico {{ width:22px; height:auto; vertical-align:middle; border-radius:2px; margin-right:6px; box-shadow:0 0 0 1px rgba(255,255,255,0.15); }}
+.flag-ico-lg {{ width:34px; height:auto; vertical-align:middle; border-radius:3px; margin-right:8px; box-shadow:0 0 0 1px rgba(255,255,255,0.15); }}
 </style>
 <div class="host-strip"><div style="background:{GREEN}"></div><div style="background:{BLUE}"></div><div style="background:{RED}"></div></div>
 """, unsafe_allow_html=True)
+
+
+# ---------------------------------------------------------------
+# HELPERS DE BANDERA
+# Los emojis de bandera (🇲🇽 etc.) no renderizan en Streamlit Cloud (Linux
+# headless sin fuente de emoji a color). Usamos siempre la imagen real
+# (teams_data.flag_url) en vez del emoji.
+#   - flag_html(code): tag <img> para insertar en bloques con unsafe_allow_html=True
+#   - flag_md(code):   sintaxis markdown ![]() para insertar en st.write/st.success/etc,
+#                       que SÍ renderiza imágenes sin necesitar unsafe_allow_html
+# En selectbox / expander / dataframe (sin soporte de imágenes) no se usa
+# ninguno de los dos: ahí se muestra solo el nombre del equipo, en texto plano.
+# ---------------------------------------------------------------
+def flag_html(code, size="sm"):
+    url = TEAMS[code]["flag_url"]
+    cls = "flag-ico" if size == "sm" else "flag-ico-lg"
+    return f'<img src="{url}" class="{cls}">'
+
+
+def flag_md(code):
+    url = TEAMS[code]["flag_url"]
+    return f'![{code}]({url})'
 
 
 # ---------------------------------------------------------------
@@ -75,8 +99,15 @@ def save_state(state):
 
 
 def team_label(code):
+    """Texto plano (sin bandera) — para selectbox, expander, dataframe."""
     t = TEAMS[code]
-    return f"{t['flag']} {t['name']}"
+    return t["name"]
+
+
+def team_label_md(code):
+    """Bandera (imagen) + nombre, en sintaxis markdown — para st.write/st.success/st.markdown."""
+    t = TEAMS[code]
+    return f"{flag_md(code)} {t['name']}"
 
 
 # ---------------------------------------------------------------
@@ -163,7 +194,7 @@ def annotate_knockout_teams(matches):
 def label_pretty(matches, label):
     resolved = resolve_label(matches, label)
     if resolved:
-        return team_label(resolved)
+        return team_label_md(resolved)
     if len(label) == 2 and label[0].isdigit() and label[1].isalpha():
         return f"{label[0]}° Grupo {label[1]}"
     if label.startswith("W-"):
@@ -220,8 +251,8 @@ def render_bracket(matches):
             slot = i + 1
             m = get_match(matches, stage, slot)
             home_code, away_code = (m["home_team"], m["away_team"]) if m else (None, None)
-            home_txt = f"{TEAMS[home_code]['flag']} {TEAMS[home_code]['name']}" if home_code else label_pretty(matches, m["home"]) if m else "?"
-            away_txt = f"{TEAMS[away_code]['flag']} {TEAMS[away_code]['name']}" if away_code else label_pretty(matches, m["away"]) if m else "?"
+            home_txt = f"{flag_html(home_code)}{TEAMS[home_code]['name']}" if home_code else (label_pretty(matches, m["home"]) if m else "?")
+            away_txt = f"{flag_html(away_code)}{TEAMS[away_code]['name']}" if away_code else (label_pretty(matches, m["away"]) if m else "?")
             played = m["played"] if m else False
             hg = m["home_goals"] if m and played else ""
             ag = m["away_goals"] if m and played else ""
@@ -280,9 +311,9 @@ matches = annotate_knockout_teams(matches)
 # INICIO
 # =================================================================
 if page == "🏠 Inicio":
-    st.markdown("""
+    st.markdown(f"""
     <div class="wc-header"><h1>🏆 FMMJ WORLD CUP UNITED 26</h1>
-    <p>México 🇲🇽 · Estados Unidos 🇺🇸 · Canadá 🇨🇦 — Anfitriones del torneo</p></div>
+    <p>{flag_html('MEX')}México · {flag_html('USA')}Estados Unidos · {flag_html('CAN')}Canadá — Anfitriones del torneo</p></div>
     """, unsafe_allow_html=True)
 
     col1, col2, col3 = st.columns(3)
@@ -293,8 +324,12 @@ if page == "🏠 Inicio":
             st.markdown(f'<div style="background:{color}22; border:1px solid {color}; border-radius:12px; padding:14px;">'
                         f'<h3 style="color:{color}; margin-top:0;">👑 Presidente {pres}</h3>'
                         f'<p>{len(equipos)} selecciones</p></div>', unsafe_allow_html=True)
-            for t in equipos:
-                st.markdown(f"- {t['flag']} **{t['name']}** (Grupo {t['group']})")
+            rows_html = "".join(
+                f'<div style="padding:2px 0;">{flag_html(t["code"])}<b>{t["name"]}</b> '
+                f'<span style="opacity:0.6;">(Grupo {t["group"]})</span></div>'
+                for t in equipos
+            )
+            st.markdown(rows_html, unsafe_allow_html=True)
 
     st.markdown("---")
     st.subheader("📋 Formato del torneo")
@@ -322,7 +357,7 @@ elif page == "🌍 Grupos y Tabla":
                 st.markdown("**Selecciones**")
                 for t in GROUPS[group_letter]:
                     team = TEAMS[t["code"]]
-                    st.markdown(f'<div class="team-card pres-{team["president"]}">{team["flag"]} <b>{team["name"]}</b><br>'
+                    st.markdown(f'<div class="team-card pres-{team["president"]}">{flag_html(team["code"])}<b>{team["name"]}</b><br>'
                                 f'<span style="opacity:0.7; font-size:0.85rem;">Presidente: {team["president"]}</span></div>', unsafe_allow_html=True)
             with colB:
                 st.markdown("**Tabla de posiciones**")
@@ -330,12 +365,15 @@ elif page == "🌍 Grupos y Tabla":
                 rows = []
                 for i, r in enumerate(standings, start=1):
                     t = TEAMS[r["code"]]
-                    rows.append({"#": i, "Selección": f"{t['flag']} {t['name']}", "PJ": r["PJ"], "PG": r["PG"],
+                    rows.append({"#": i, "Bandera": t["flag_url"], "Selección": t["name"], "PJ": r["PJ"], "PG": r["PG"],
                                 "PE": r["PE"], "PP": r["PP"], "GF": r["GF"], "GC": r["GC"],
                                 "DG": r["GF"] - r["GC"], "Pts": r["Pts"]})
-                st.dataframe(rows, hide_index=True, width="stretch")
+                st.dataframe(
+                    rows, hide_index=True, width="stretch",
+                    column_config={"Bandera": st.column_config.ImageColumn("", width="small")},
+                )
                 if group_is_complete(matches, group_letter):
-                    st.success(f"✅ Clasifican: {team_label(standings[0]['code'])} y {team_label(standings[1]['code'])}")
+                    st.markdown(f"✅ Clasifican: {team_label_md(standings[0]['code'])} y {team_label_md(standings[1]['code'])}")
                 else:
                     st.info("⏳ Grupo en curso, faltan partidos por jugar.")
 
@@ -353,7 +391,10 @@ elif page == "📅 Calendario / Resultados":
         st.markdown(f'<div class="stage-banner">Jornada {jornada}</div>', unsafe_allow_html=True)
         for m in [mm for mm in group_matches if mm["jornada"] == jornada]:
             home_t, away_t = TEAMS[m["home"]], TEAMS[m["away"]]
-            with st.expander(f"{home_t['flag']} {home_t['name']}  vs  {away_t['flag']} {away_t['name']}" + ("  ✅" if m["played"] else "  ⏳")):
+            # Los emojis de bandera no renderizan dentro del texto del expander,
+            # así que aquí se muestra solo el nombre (sin bandera).
+            with st.expander(f"{home_t['name']}  vs  {away_t['name']}" + ("  ✅" if m["played"] else "  ⏳")):
+                st.markdown(f"{flag_html(m['home'])}**{home_t['name']}**  vs  **{away_t['name']}**{flag_html(m['away'])}", unsafe_allow_html=True)
                 with st.form(key=f"form_match_{m['id']}"):
                     c1, c2 = st.columns(2)
                     hg = c1.number_input(f"Goles {home_t['name']}", min_value=0, max_value=20, value=m["home_goals"] or 0, step=1, key=f"hg_{m['id']}")
@@ -401,13 +442,13 @@ elif page == "🏆 Eliminatorias":
         tercer = get_match(matches, "3rd", 1)
         if tercer:
             h = tercer["home_team"]; a = tercer["away_team"]
-            h_txt = team_label(h) if h else label_pretty(matches, tercer["home"])
-            a_txt = team_label(a) if a else label_pretty(matches, tercer["away"])
+            h_txt = team_label_md(h) if h else label_pretty(matches, tercer["home"])
+            a_txt = team_label_md(a) if a else label_pretty(matches, tercer["away"])
             st.markdown("#### 🥉 Partido por el Tercer Puesto")
             if tercer["played"]:
-                st.write(f"{h_txt} {tercer['home_goals']} - {tercer['away_goals']} {a_txt}")
+                st.markdown(f"{h_txt} {tercer['home_goals']} - {tercer['away_goals']} {a_txt}")
             else:
-                st.write(f"{h_txt}  vs  {a_txt}")
+                st.markdown(f"{h_txt}  vs  {a_txt}")
 
     with sub_tab2:
         stage_order = ["r16", "qf", "sf", "3rd", "final"]
@@ -420,8 +461,8 @@ elif page == "🏆 Eliminatorias":
                 container = cols[idx] if cols else st.container()
                 with container:
                     home_code, away_code = m["home_team"], m["away_team"]
-                    home_txt = team_label(home_code) if home_code else label_pretty(matches, m["home"])
-                    away_txt = team_label(away_code) if away_code else label_pretty(matches, m["away"])
+                    home_txt = team_label_md(home_code) if home_code else label_pretty(matches, m["home"])
+                    away_txt = team_label_md(away_code) if away_code else label_pretty(matches, m["away"])
                     st.markdown(f"**{home_txt}**  vs  **{away_txt}**")
 
                     if home_code is None or away_code is None:
@@ -433,7 +474,7 @@ elif page == "🏆 Eliminatorias":
                         if m["home_goals"] == m["away_goals"] and m.get("pen_home") is not None:
                             extra = f" (pen. {m['pen_home']}-{m['pen_away']})"
                         st.write(f"🔢 {m['home_goals']} - {m['away_goals']}{extra}")
-                        st.success(f"Avanza: {team_label(winner_of(m))}")
+                        st.markdown(f"Avanza: {team_label_md(winner_of(m))}")
                     else:
                         with st.form(key=f"ko_form_{m['id']}"):
                             c1, c2 = st.columns(2)
@@ -473,13 +514,16 @@ elif page == "🏆 Eliminatorias":
 elif page == "👥 Convocatorias":
     st.markdown('<div class="wc-header"><h1>👥 Convocatorias (26 jugadores)</h1></div>', unsafe_allow_html=True)
     all_codes = sorted(TEAMS.keys(), key=lambda c: (TEAMS[c]["group"], TEAMS[c]["name"]))
-    labels = [f"{TEAMS[c]['flag']} {TEAMS[c]['name']} (Grupo {TEAMS[c]['group']})" for c in all_codes]
+    # Sin bandera en las opciones: un <select> HTML no puede mostrar imágenes,
+    # y el emoji ahí se veía roto ("co Colombia"). Se agrega el código de país
+    # entre corchetes para que sea fácil ubicar la selección igual.
+    labels = [f"{TEAMS[c]['name']} [{c}] (Grupo {TEAMS[c]['group']})" for c in all_codes]
     sel = st.selectbox("Selecciona una selección", labels)
     code = all_codes[labels.index(sel)]
     team = TEAMS[code]
     pres_color = {"Mati": GREEN, "Jnka": BLUE, "Dibu": RED}[team["president"]]
     st.markdown(f'<div style="background:{pres_color}22; border-left:6px solid {pres_color}; padding:12px 16px; border-radius:8px;">'
-                f'<h2 style="margin:0;">{team["flag"]} {team["name"]}</h2>'
+                f'<h2 style="margin:0;">{flag_html(code, size="lg")}{team["name"]}</h2>'
                 f'<p style="margin:0;">Grupo {team["group"]} · Presidente: <b>{team["president"]}</b></p></div>', unsafe_allow_html=True)
 
     st.markdown("### 📋 Lista de 26")
@@ -509,8 +553,11 @@ elif page == "🥇 Premios":
     st.subheader("⚽ Bota de Oro (Máximo Goleador)")
     if scorer_count:
         ranking = sorted(scorer_count.items(), key=lambda x: x[1], reverse=True)[:10]
-        rows = [{"Jugador": f"{TEAMS[team]['flag']} {player}", "Selección": TEAMS[team]["name"], "Goles": n} for (team, player), n in ranking]
-        st.dataframe(rows, hide_index=True, width="stretch")
+        rows = [{"Bandera": TEAMS[team]["flag_url"], "Jugador": player, "Selección": TEAMS[team]["name"], "Goles": n} for (team, player), n in ranking]
+        st.dataframe(
+            rows, hide_index=True, width="stretch",
+            column_config={"Bandera": st.column_config.ImageColumn("", width="small")},
+        )
     else:
         st.info("Aún no hay goles registrados.")
 
@@ -520,18 +567,19 @@ elif page == "🥇 Premios":
     st.subheader("🏆 Campeón del Mundo")
     if final_match and final_match["played"]:
         champ, runner_up = winner_of(final_match), loser_of(final_match)
-        st.success(f"🥇 CAMPEÓN: {team_label(champ)}")
-        st.write(f"🥈 Subcampeón: {team_label(runner_up)}")
+        st.markdown(f"🥇 **CAMPEÓN:** {team_label_md(champ)}")
+        st.markdown(f"🥈 Subcampeón: {team_label_md(runner_up)}")
     else:
         st.info("La Gran Final aún no se ha jugado.")
     if tercer_match and tercer_match["played"]:
-        st.write(f"🥉 Tercer lugar: {team_label(winner_of(tercer_match))}")
+        st.markdown(f"🥉 Tercer lugar: {team_label_md(winner_of(tercer_match))}")
 
     st.markdown("---")
     st.subheader("🌟 Balón de Oro, Guante de Oro y Mejor Jugador Joven")
     st.caption("Estos premios los define la mesa de presidentes (Mati, Jnka y Dibu). Quedan guardados para todos.")
 
-    all_players = ["-- Sin definir --"] + [f"{t['flag']} {p['nombre']} ({t['name']})" for t in TEAMS.values() for p in t["squad"]]
+    # Sin bandera en las opciones del selectbox (no se pueden mostrar imágenes ahí).
+    all_players = ["-- Sin definir --"] + [f"{p['nombre']} ({t['name']})" for t in TEAMS.values() for p in t["squad"]]
     awards = state.get("awards", {"balon_oro": "", "guante_oro": "", "joven": ""})
 
     def idx_of(val):
