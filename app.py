@@ -18,28 +18,101 @@ STAGE_NAMES = {
 }
 
 # ---------------------------------------------------------------
-# CSS - identidad visual con los 3 colores anfitriones
+# CSS - identidad visual con los 3 colores anfitriones + efectos
 # ---------------------------------------------------------------
 st.markdown(f"""
 <style>
-.stApp {{ background: linear-gradient(180deg, #0d1117 0%, #10151c 100%); }}
-.wc-header {{
-    background: linear-gradient(90deg, {GREEN} 0%, {BLUE} 50%, {RED} 100%);
-    padding: 22px 28px; border-radius: 14px; margin-bottom: 18px;
-    box-shadow: 0 4px 18px rgba(0,0,0,0.4);
+@keyframes shimmer {{
+    0% {{ background-position: 0% 50%; }}
+    50% {{ background-position: 100% 50%; }}
+    100% {{ background-position: 0% 50%; }}
 }}
-.wc-header h1 {{ color: white; margin: 0; font-size: 2.1rem; letter-spacing: 1px; text-shadow: 1px 1px 4px rgba(0,0,0,0.5); }}
-.wc-header p {{ color: #f0f0f0; margin: 4px 0 0 0; }}
-.host-strip {{ display:flex; height:6px; border-radius: 4px; overflow:hidden; margin-bottom: 16px; }}
+@keyframes fadeInUp {{
+    from {{ opacity: 0; transform: translateY(12px); }}
+    to {{ opacity: 1; transform: translateY(0); }}
+}}
+@keyframes pulseGlow {{
+    0% {{ box-shadow: 0 0 0 0 rgba(201,162,75,0.45); }}
+    70% {{ box-shadow: 0 0 0 8px rgba(201,162,75,0); }}
+    100% {{ box-shadow: 0 0 0 0 rgba(201,162,75,0); }}
+}}
+@keyframes floatFlag {{
+    0%, 100% {{ transform: translateY(0px); }}
+    50% {{ transform: translateY(-3px); }}
+}}
+
+.stApp {{ background: radial-gradient(circle at 20% 0%, #131a24 0%, #0d1117 45%, #0a0d12 100%); }}
+
+.wc-header {{
+    background: linear-gradient(120deg, {GREEN} 0%, {BLUE} 45%, {RED} 90%);
+    background-size: 200% 200%;
+    animation: shimmer 9s ease-in-out infinite;
+    padding: 26px 30px; border-radius: 16px; margin-bottom: 18px;
+    box-shadow: 0 8px 26px rgba(0,0,0,0.45);
+    border: 1px solid rgba(255,255,255,0.08);
+    animation: shimmer 9s ease-in-out infinite, fadeInUp 0.6s ease;
+}}
+.wc-header h1 {{ color: white; margin: 0; font-size: 2.3rem; letter-spacing: 1px; text-shadow: 1px 1px 6px rgba(0,0,0,0.55); }}
+.wc-header p {{ color: #f2f2f2; margin: 6px 0 0 0; font-size: 1.02rem; }}
+
+.host-strip {{ display:flex; height:6px; border-radius: 4px; overflow:hidden; margin-bottom: 16px;
+               box-shadow: 0 0 12px rgba(201,162,75,0.35); }}
 .host-strip div {{ flex:1; }}
-.team-card {{ border-radius: 12px; padding: 10px 14px; margin-bottom: 6px; background: rgba(255,255,255,0.04); border-left: 5px solid {GOLD}; }}
+
+.team-card {{
+    border-radius: 12px; padding: 12px 16px; margin-bottom: 8px;
+    background: rgba(255,255,255,0.045); border-left: 5px solid {GOLD};
+    transition: transform 0.18s ease, background 0.18s ease, box-shadow 0.18s ease;
+    animation: fadeInUp 0.45s ease;
+}}
+.team-card:hover {{ transform: translateX(4px) scale(1.015); background: rgba(255,255,255,0.09);
+                     box-shadow: 0 4px 14px rgba(0,0,0,0.35); }}
 .pres-Mati {{ border-left-color: {GREEN} !important; }}
 .pres-Jnka {{ border-left-color: {BLUE} !important; }}
 .pres-Dibu {{ border-left-color: {RED} !important; }}
-.group-title {{ background: linear-gradient(90deg, {GREEN}, {BLUE}, {RED}); padding: 6px 14px; border-radius: 8px; color: white; font-weight: 700; display:inline-block; margin-bottom: 8px; }}
-.stage-banner {{ background: linear-gradient(90deg, {RED}, {GOLD}, {BLUE}); color:white; padding:10px 16px; border-radius:10px; font-weight:700; margin: 10px 0; }}
-.flag-ico {{ width:22px; height:auto; vertical-align:middle; border-radius:2px; margin-right:6px; box-shadow:0 0 0 1px rgba(255,255,255,0.15); }}
-.flag-ico-lg {{ width:34px; height:auto; vertical-align:middle; border-radius:3px; margin-right:8px; box-shadow:0 0 0 1px rgba(255,255,255,0.15); }}
+
+.group-title {{
+    background: linear-gradient(90deg, {GREEN}, {BLUE}, {RED});
+    background-size: 200% 100%; animation: shimmer 6s ease-in-out infinite;
+    padding: 7px 16px; border-radius: 8px; color: white; font-weight: 700;
+    display:inline-block; margin-bottom: 10px; letter-spacing: 0.5px;
+}}
+.stage-banner {{
+    background: linear-gradient(90deg, {RED}, {GOLD}, {BLUE});
+    background-size: 200% 100%; animation: shimmer 7s ease-in-out infinite;
+    color:white; padding:11px 18px; border-radius:10px; font-weight:700;
+    margin: 12px 0; text-align:center; letter-spacing: 0.5px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.3);
+}}
+.flag-ico {{ width:22px; height:auto; vertical-align:middle; border-radius:2px; margin-right:6px;
+             box-shadow:0 0 0 1px rgba(255,255,255,0.15); animation: floatFlag 3.2s ease-in-out infinite; }}
+.flag-ico-lg {{ width:38px; height:auto; vertical-align:middle; border-radius:4px; margin-right:9px;
+                box-shadow:0 0 0 1px rgba(255,255,255,0.18); animation: floatFlag 3.2s ease-in-out infinite; }}
+
+.stat-pill {{
+    display:inline-block; background: rgba(201,162,75,0.13); border: 1px solid {GOLD};
+    color: {GOLD}; padding: 4px 12px; border-radius: 999px; font-size: 0.82rem;
+    font-weight: 600; margin-right: 6px;
+}}
+.pending-pulse {{ animation: pulseGlow 2.4s infinite; border-radius: 10px; }}
+
+.champion-banner {{
+    background: linear-gradient(135deg, {GOLD} 0%, #f4e2ab 40%, {GOLD} 100%);
+    background-size: 200% 200%; animation: shimmer 5s ease-in-out infinite, fadeInUp 0.6s ease;
+    color: #1a1200; padding: 22px 26px; border-radius: 16px; text-align:center;
+    box-shadow: 0 10px 30px rgba(201,162,75,0.35); margin: 14px 0;
+}}
+.champion-banner h2 {{ margin:0; font-size: 1.9rem; }}
+
+.medal-1 {{ color:#FFD700; }} .medal-2 {{ color:#C7CBD1; }} .medal-3 {{ color:#CD7F32; }}
+
+.progress-wrap {{ background: rgba(255,255,255,0.06); border-radius: 999px; height: 12px; overflow:hidden;
+                   margin: 6px 0 14px 0; border: 1px solid rgba(255,255,255,0.08); }}
+.progress-bar {{ height: 100%; background: linear-gradient(90deg, {GREEN}, {BLUE}, {RED});
+                  background-size: 200% 100%; animation: shimmer 4s ease-in-out infinite;
+                  border-radius: 999px; transition: width 0.5s ease; }}
+
+.section-fade {{ animation: fadeInUp 0.5s ease; }}
 </style>
 <div class="host-strip"><div style="background:{GREEN}"></div><div style="background:{BLUE}"></div><div style="background:{RED}"></div></div>
 """, unsafe_allow_html=True)
@@ -47,14 +120,6 @@ st.markdown(f"""
 
 # ---------------------------------------------------------------
 # HELPERS DE BANDERA
-# Los emojis de bandera (🇲🇽 etc.) no renderizan en Streamlit Cloud (Linux
-# headless sin fuente de emoji a color). Usamos siempre la imagen real
-# (teams_data.flag_url) en vez del emoji.
-#   - flag_html(code): tag <img> para insertar en bloques con unsafe_allow_html=True
-#   - flag_md(code):   sintaxis markdown ![]() para insertar en st.write/st.success/etc,
-#                       que SÍ renderiza imágenes sin necesitar unsafe_allow_html
-# En selectbox / expander / dataframe (sin soporte de imágenes) no se usa
-# ninguno de los dos: ahí se muestra solo el nombre del equipo, en texto plano.
 # ---------------------------------------------------------------
 def flag_html(code, size="sm"):
     url = TEAMS[code]["flag_url"]
@@ -68,11 +133,10 @@ def flag_md(code):
 
 
 # ---------------------------------------------------------------
-# ESTADO PERSISTENTE (matches + premios) en un único archivo plano
-# Autogenerado si no existe -> imposible que falte el archivo.
+# ESTADO PERSISTENTE (solo resultados de partidos) en un único archivo plano
 # ---------------------------------------------------------------
 def default_state():
-    return {"matches": generate_initial_matches(), "awards": {"balon_oro": "", "guante_oro": "", "joven": ""}}
+    return {"matches": generate_initial_matches()}
 
 
 def load_state():
@@ -88,6 +152,7 @@ def load_state():
         state = default_state()
         with open(STATE_PATH, "w", encoding="utf-8") as f:
             json.dump(state, f, ensure_ascii=False, indent=2)
+    state.setdefault("matches", generate_initial_matches())
     st.session_state["tourn_state"] = state
     return state
 
@@ -100,8 +165,7 @@ def save_state(state):
 
 def team_label(code):
     """Texto plano (sin bandera) — para selectbox, expander, dataframe."""
-    t = TEAMS[code]
-    return t["name"]
+    return TEAMS[code]["name"]
 
 
 def team_label_md(code):
@@ -211,7 +275,7 @@ def label_pretty(matches, label):
 # renderizado como HTML/CSS absoluto dentro de un iframe con components.html)
 # ---------------------------------------------------------------
 def render_bracket(matches):
-    BOX_W, BOX_H, GAP0, ROUND_GAP = 210, 58, 22, 74
+    BOX_W, BOX_H, GAP0, ROUND_GAP = 210, 60, 22, 74
     unit0 = BOX_H + GAP0
     N0 = 8
     stages = ["r16", "qf", "sf", "final"]
@@ -228,7 +292,6 @@ def render_bracket(matches):
 
     elements = []  # (html, order) order 0 = lines (back), 1 = boxes (front)
 
-    # líneas conectoras
     for r in range(len(stages) - 1):
         N_r1 = N0 // (2 ** (r + 1))
         for j in range(N_r1):
@@ -243,7 +306,6 @@ def render_bracket(matches):
             top_v, bot_v = min(y0, y1), max(y0, y1)
             elements.append((f'<div style="position:absolute;left:{x_mid-1}px;top:{top_v}px;width:2px;height:{bot_v-top_v}px;background:{GOLD};opacity:0.55;"></div>', 0))
 
-    # cajas de partidos
     for r, stage in enumerate(stages):
         N_r = N0 // (2 ** r)
         color = stage_colors[stage]
@@ -259,12 +321,13 @@ def render_bracket(matches):
             w = winner_of(m) if m else None
             home_bold = "font-weight:800;color:#fff;" if (w and w == home_code) else "opacity:0.85;"
             away_bold = "font-weight:800;color:#fff;" if (w and w == away_code) else "opacity:0.85;"
+            box_glow = f"box-shadow:0 0 12px {color}66, 0 2px 6px rgba(0,0,0,0.4);" if played else "box-shadow:0 2px 6px rgba(0,0,0,0.4);"
             top_y = center(r, i) - BOX_H / 2
             left_x = xpos(r)
             box_html = f'''
             <div style="position:absolute; left:{left_x}px; top:{top_y}px; width:{BOX_W}px; height:{BOX_H}px;
                         background:#161b22; border:1.5px solid {color}; border-radius:8px;
-                        font-size:12px; color:#ddd; overflow:hidden; box-shadow:0 2px 6px rgba(0,0,0,0.4);">
+                        font-size:12px; color:#ddd; overflow:hidden; {box_glow} transition: transform 0.15s;">
                 <div style="display:flex; justify-content:space-between; align-items:center; padding:3px 8px; height:50%; border-bottom:1px solid #2a2f38; {home_bold}">
                     <span style="white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">{home_txt}</span>
                     <span>{hg}</span>
@@ -275,7 +338,6 @@ def render_bracket(matches):
                 </div>
             </div>'''
             elements.append((box_html, 1))
-        # título de ronda
         elements.append((f'<div style="position:absolute; left:{xpos(r)}px; top:-26px; width:{BOX_W}px; text-align:center; color:{color}; font-weight:700; font-size:13px;">{STAGE_NAMES[stage]}</div>', 1))
 
     elements.sort(key=lambda e: e[1])
@@ -288,7 +350,7 @@ def render_bracket(matches):
       </div>
     </div>
     """
-    st.iframe(html, height=int(total_h) + 60, width="stretch")
+    st.components.v1.html(html, height=int(total_h) + 60, scrolling=True)
 
 
 # ---------------------------------------------------------------
@@ -299,13 +361,20 @@ st.sidebar.markdown("**UNITED 26**")
 st.sidebar.caption("Presidentes: Mati 🟢 · Jnka 🔵 · Dibu 🔴")
 page = st.sidebar.radio(
     "Navegación",
-    ["🏠 Inicio", "🌍 Grupos y Tabla", "📅 Calendario / Resultados",
-     "🏆 Eliminatorias", "👥 Convocatorias", "🥇 Premios"],
+    ["🏠 Inicio", "🌍 Grupos y Tabla", "📅 Calendario / Resultados", "🏆 Eliminatorias"],
 )
 
 state = load_state()
 matches = state["matches"]
 matches = annotate_knockout_teams(matches)
+
+total_matches = len(matches)
+total_jugados = sum(1 for m in matches if m["played"])
+progress_pct = int(100 * total_jugados / total_matches) if total_matches else 0
+
+st.sidebar.markdown("#### Progreso del torneo")
+st.sidebar.markdown(f'<div class="progress-wrap"><div class="progress-bar" style="width:{progress_pct}%;"></div></div>', unsafe_allow_html=True)
+st.sidebar.caption(f"{total_jugados} / {total_matches} partidos jugados ({progress_pct}%)")
 
 # =================================================================
 # INICIO
@@ -316,16 +385,30 @@ if page == "🏠 Inicio":
     <p>{flag_html('MEX')}México · {flag_html('USA')}Estados Unidos · {flag_html('CAN')}Canadá — Anfitriones del torneo</p></div>
     """, unsafe_allow_html=True)
 
+    m1, m2, m3 = st.columns(3)
+    m1.metric("⚽ Partidos jugados", f"{total_jugados} / {total_matches}")
+    grupos_completos = sum(1 for g in GROUPS if group_is_complete(matches, g))
+    m2.metric("🌍 Grupos completos", f"{grupos_completos} / 8")
+    final_match = get_match(matches, "final", 1)
+    m3.metric("🏆 Estado de la Final", "Jugada ✅" if final_match["played"] else "Pendiente ⏳")
+
+    if final_match["played"]:
+        champ = winner_of(final_match)
+        st.markdown(f'<div class="champion-banner"><h2>🏆 CAMPEÓN DEL MUNDO 🏆</h2>'
+                    f'<div style="margin-top:8px; font-size:1.4rem;">{flag_html(champ, size="lg")}<b>{TEAMS[champ]["name"]}</b></div></div>',
+                    unsafe_allow_html=True)
+
+    st.markdown("---")
     col1, col2, col3 = st.columns(3)
     presidentes = {"Mati": GREEN, "Jnka": BLUE, "Dibu": RED}
     for col, (pres, color) in zip([col1, col2, col3], presidentes.items()):
         equipos = [t for t in TEAMS.values() if t["president"] == pres]
         with col:
-            st.markdown(f'<div style="background:{color}22; border:1px solid {color}; border-radius:12px; padding:14px;">'
+            st.markdown(f'<div class="section-fade" style="background:{color}22; border:1px solid {color}; border-radius:12px; padding:14px;">'
                         f'<h3 style="color:{color}; margin-top:0;">👑 Presidente {pres}</h3>'
-                        f'<p>{len(equipos)} selecciones</p></div>', unsafe_allow_html=True)
+                        f'<span class="stat-pill">{len(equipos)} selecciones</span></div>', unsafe_allow_html=True)
             rows_html = "".join(
-                f'<div style="padding:2px 0;">{flag_html(t["code"])}<b>{t["name"]}</b> '
+                f'<div class="team-card pres-{pres}" style="padding:6px 12px;">{flag_html(t["code"])}<b>{t["name"]}</b> '
                 f'<span style="opacity:0.6;">(Grupo {t["group"]})</span></div>'
                 for t in equipos
             )
@@ -338,10 +421,7 @@ if page == "🏠 Inicio":
     - Fase de grupos: todos contra todos (3 jornadas, 6 partidos por grupo).
     - Clasifican los **2 primeros** de cada grupo a **Octavos de Final**.
     - Octavos → Cuartos → Semifinales → Tercer puesto y **Gran Final**.
-    - Cada selección lleva una convocatoria de **26 jugadores**.
     """)
-    total_jugados = sum(1 for m in matches if m["played"])
-    st.metric("Partidos jugados", f"{total_jugados} / {len(matches)}")
 
 # =================================================================
 # GRUPOS Y TABLA
@@ -363,9 +443,10 @@ elif page == "🌍 Grupos y Tabla":
                 st.markdown("**Tabla de posiciones**")
                 standings = compute_standings(matches, group_letter)
                 rows = []
-                for i, r in enumerate(standings, start=1):
+                medals = ["🥇", "🥈", "", ""]
+                for i, r in enumerate(standings):
                     t = TEAMS[r["code"]]
-                    rows.append({"#": i, "Bandera": t["flag_url"], "Selección": t["name"], "PJ": r["PJ"], "PG": r["PG"],
+                    rows.append({"": medals[i], "Bandera": t["flag_url"], "Selección": t["name"], "PJ": r["PJ"], "PG": r["PG"],
                                 "PE": r["PE"], "PP": r["PP"], "GF": r["GF"], "GC": r["GC"],
                                 "DG": r["GF"] - r["GC"], "Pts": r["Pts"]})
                 st.dataframe(
@@ -375,14 +456,16 @@ elif page == "🌍 Grupos y Tabla":
                 if group_is_complete(matches, group_letter):
                     st.markdown(f"✅ Clasifican: {team_label_md(standings[0]['code'])} y {team_label_md(standings[1]['code'])}")
                 else:
+                    st.markdown('<div class="pending-pulse">', unsafe_allow_html=True)
                     st.info("⏳ Grupo en curso, faltan partidos por jugar.")
+                    st.markdown('</div>', unsafe_allow_html=True)
 
 # =================================================================
 # CALENDARIO / RESULTADOS (fase de grupos)
 # =================================================================
 elif page == "📅 Calendario / Resultados":
-    st.markdown('<div class="wc-header"><h1>📅 Calendario y Registro de Goles</h1></div>', unsafe_allow_html=True)
-    st.caption("Registra el marcador y los goleadores de cada partido de la fase de grupos.")
+    st.markdown('<div class="wc-header"><h1>📅 Calendario y Resultados</h1></div>', unsafe_allow_html=True)
+    st.caption("Registra el marcador de cada partido de la fase de grupos.")
 
     group_letter = st.selectbox("Selecciona el grupo", list(GROUPS.keys()))
     group_matches = sorted([m for m in matches if m["stage"] == "group" and m["group"] == group_letter], key=lambda m: m["jornada"])
@@ -391,41 +474,18 @@ elif page == "📅 Calendario / Resultados":
         st.markdown(f'<div class="stage-banner">Jornada {jornada}</div>', unsafe_allow_html=True)
         for m in [mm for mm in group_matches if mm["jornada"] == jornada]:
             home_t, away_t = TEAMS[m["home"]], TEAMS[m["away"]]
-            # Los emojis de bandera no renderizan dentro del texto del expander,
-            # así que aquí se muestra solo el nombre (sin bandera).
-            with st.expander(f"{home_t['name']}  vs  {away_t['name']}" + ("  ✅" if m["played"] else "  ⏳")):
+            marcador = f"  ({m['home_goals']} - {m['away_goals']})  ✅" if m["played"] else "  ⏳"
+            with st.expander(f"{home_t['name']}  vs  {away_t['name']}{marcador}"):
                 st.markdown(f"{flag_html(m['home'])}**{home_t['name']}**  vs  **{away_t['name']}**{flag_html(m['away'])}", unsafe_allow_html=True)
                 with st.form(key=f"form_match_{m['id']}"):
                     c1, c2 = st.columns(2)
                     hg = c1.number_input(f"Goles {home_t['name']}", min_value=0, max_value=20, value=m["home_goals"] or 0, step=1, key=f"hg_{m['id']}")
                     ag = c2.number_input(f"Goles {away_t['name']}", min_value=0, max_value=20, value=m["away_goals"] or 0, step=1, key=f"ag_{m['id']}")
-
-                    home_names = [f"{p['dorsal']}. {p['nombre']}" for p in home_t["squad"]]
-                    away_names = [f"{p['dorsal']}. {p['nombre']}" for p in away_t["squad"]]
-                    prev_goals = m.get("goals", [])
-                    prev_home = [g["player"] for g in prev_goals if g["team"] == m["home"]]
-                    prev_away = [g["player"] for g in prev_goals if g["team"] == m["away"]]
-
-                    st.markdown(f"**Goleadores {home_t['name']}** (elige {int(hg)})")
-                    home_scorers = []
-                    for i in range(int(hg)):
-                        default = prev_home[i] if i < len(prev_home) else home_names[0]
-                        idx = home_names.index(default) if default in home_names else 0
-                        home_scorers.append(st.selectbox(f"Gol {i+1} - {home_t['name']}", home_names, index=idx, key=f"hs_{m['id']}_{i}"))
-
-                    st.markdown(f"**Goleadores {away_t['name']}** (elige {int(ag)})")
-                    away_scorers = []
-                    for i in range(int(ag)):
-                        default = prev_away[i] if i < len(prev_away) else away_names[0]
-                        idx = away_names.index(default) if default in away_names else 0
-                        away_scorers.append(st.selectbox(f"Gol {i+1} - {away_t['name']}", away_names, index=idx, key=f"as_{m['id']}_{i}"))
-
                     if st.form_submit_button("💾 Guardar resultado"):
                         m["home_goals"], m["away_goals"], m["played"] = int(hg), int(ag), True
-                        m["goals"] = [{"team": m["home"], "player": n.split(". ", 1)[1]} for n in home_scorers] + \
-                                     [{"team": m["away"], "player": n.split(". ", 1)[1]} for n in away_scorers]
                         save_state(state)
                         st.success("Resultado guardado ✅")
+                        st.balloons()
                         st.rerun()
 
 # =================================================================
@@ -439,6 +499,7 @@ elif page == "🏆 Eliminatorias":
     with sub_tab1:
         st.caption("Cuadro de eliminación directa estilo Champions League — se completa solo cuando terminan los grupos.")
         render_bracket(matches)
+
         tercer = get_match(matches, "3rd", 1)
         if tercer:
             h = tercer["home_team"]; a = tercer["away_team"]
@@ -449,6 +510,14 @@ elif page == "🏆 Eliminatorias":
                 st.markdown(f"{h_txt} {tercer['home_goals']} - {tercer['away_goals']} {a_txt}")
             else:
                 st.markdown(f"{h_txt}  vs  {a_txt}")
+
+        final_match = get_match(matches, "final", 1)
+        if final_match and final_match["played"]:
+            champ, runner_up = winner_of(final_match), loser_of(final_match)
+            st.markdown(f'<div class="champion-banner"><h2>🏆 CAMPEÓN DEL MUNDO 🏆</h2>'
+                        f'<div style="margin-top:8px; font-size:1.4rem;">{flag_html(champ, size="lg")}<b>{TEAMS[champ]["name"]}</b></div>'
+                        f'<div style="margin-top:6px; opacity:0.85;">🥈 Subcampeón: {TEAMS[runner_up]["name"]}</div></div>',
+                        unsafe_allow_html=True)
 
     with sub_tab2:
         stage_order = ["r16", "qf", "sf", "3rd", "final"]
@@ -485,16 +554,6 @@ elif page == "🏆 Eliminatorias":
                             pen_home = cp1.number_input("Penales local", min_value=0, max_value=15, step=1, key=f"ph_{m['id']}")
                             pen_away = cp2.number_input("Penales visita", min_value=0, max_value=15, step=1, key=f"pa_{m['id']}")
 
-                            home_names = [f"{p['dorsal']}. {p['nombre']}" for p in TEAMS[home_code]["squad"]]
-                            away_names = [f"{p['dorsal']}. {p['nombre']}" for p in TEAMS[away_code]["squad"]]
-                            home_scorers, away_scorers = [], []
-                            st.markdown(f"**Goleadores {TEAMS[home_code]['name']}**")
-                            for i in range(int(hg)):
-                                home_scorers.append(st.selectbox(f"Gol {i+1} local", home_names, key=f"kohs_{m['id']}_{i}"))
-                            st.markdown(f"**Goleadores {TEAMS[away_code]['name']}**")
-                            for i in range(int(ag)):
-                                away_scorers.append(st.selectbox(f"Gol {i+1} visita", away_names, key=f"koas_{m['id']}_{i}"))
-
                             if st.form_submit_button("💾 Guardar resultado"):
                                 if hg == ag and pen_home == pen_away:
                                     st.error("En eliminación directa no puede haber doble empate. Define un ganador por penales.")
@@ -502,108 +561,10 @@ elif page == "🏆 Eliminatorias":
                                     m["home_goals"], m["away_goals"], m["played"] = int(hg), int(ag), True
                                     if hg == ag:
                                         m["pen_home"], m["pen_away"] = int(pen_home), int(pen_away)
-                                    m["goals"] = [{"team": home_code, "player": n.split(". ", 1)[1]} for n in home_scorers] + \
-                                                 [{"team": away_code, "player": n.split(". ", 1)[1]} for n in away_scorers]
                                     save_state(state)
                                     st.success("Resultado guardado ✅")
+                                    st.balloons()
                                     st.rerun()
-
-# =================================================================
-# CONVOCATORIAS
-# =================================================================
-elif page == "👥 Convocatorias":
-    st.markdown('<div class="wc-header"><h1>👥 Convocatorias (26 jugadores)</h1></div>', unsafe_allow_html=True)
-    all_codes = sorted(TEAMS.keys(), key=lambda c: (TEAMS[c]["group"], TEAMS[c]["name"]))
-    # Sin bandera en las opciones: un <select> HTML no puede mostrar imágenes,
-    # y el emoji ahí se veía roto ("co Colombia"). Se agrega el código de país
-    # entre corchetes para que sea fácil ubicar la selección igual.
-    labels = [f"{TEAMS[c]['name']} [{c}] (Grupo {TEAMS[c]['group']})" for c in all_codes]
-    sel = st.selectbox("Selecciona una selección", labels)
-    code = all_codes[labels.index(sel)]
-    team = TEAMS[code]
-    pres_color = {"Mati": GREEN, "Jnka": BLUE, "Dibu": RED}[team["president"]]
-    st.markdown(f'<div style="background:{pres_color}22; border-left:6px solid {pres_color}; padding:12px 16px; border-radius:8px;">'
-                f'<h2 style="margin:0;">{flag_html(code, size="lg")}{team["name"]}</h2>'
-                f'<p style="margin:0;">Grupo {team["group"]} · Presidente: <b>{team["president"]}</b></p></div>', unsafe_allow_html=True)
-
-    st.markdown("### 📋 Lista de 26")
-    por = [p for p in team["squad"] if p["posicion"] == "POR"]
-    de = [p for p in team["squad"] if p["posicion"] == "DEF"]
-    me = [p for p in team["squad"] if p["posicion"] == "MED"]
-    de_l = [p for p in team["squad"] if p["posicion"] == "DEL"]
-    c1, c2, c3, c4 = st.columns(4)
-    for col, group, title in zip([c1, c2, c3, c4], [por, de, me, de_l], ["🧤 Arqueros", "🛡️ Defensas", "⚙️ Mediocampistas", "⚡ Delanteros"]):
-        with col:
-            st.markdown(f"**{title}**")
-            for p in group:
-                st.write(f"{p['dorsal']}. {p['nombre']}")
-
-# =================================================================
-# PREMIOS
-# =================================================================
-elif page == "🥇 Premios":
-    st.markdown('<div class="wc-header"><h1>🥇 Premios del Torneo</h1></div>', unsafe_allow_html=True)
-
-    scorer_count = {}
-    for m in matches:
-        for g in m.get("goals", []):
-            key = (g["team"], g["player"])
-            scorer_count[key] = scorer_count.get(key, 0) + 1
-
-    st.subheader("⚽ Bota de Oro (Máximo Goleador)")
-    if scorer_count:
-        ranking = sorted(scorer_count.items(), key=lambda x: x[1], reverse=True)[:10]
-        rows = [{"Bandera": TEAMS[team]["flag_url"], "Jugador": player, "Selección": TEAMS[team]["name"], "Goles": n} for (team, player), n in ranking]
-        st.dataframe(
-            rows, hide_index=True, width="stretch",
-            column_config={"Bandera": st.column_config.ImageColumn("", width="small")},
-        )
-    else:
-        st.info("Aún no hay goles registrados.")
-
-    st.markdown("---")
-    final_match = get_match(matches, "final", 1)
-    tercer_match = get_match(matches, "3rd", 1)
-    st.subheader("🏆 Campeón del Mundo")
-    if final_match and final_match["played"]:
-        champ, runner_up = winner_of(final_match), loser_of(final_match)
-        st.markdown(f"🥇 **CAMPEÓN:** {team_label_md(champ)}")
-        st.markdown(f"🥈 Subcampeón: {team_label_md(runner_up)}")
-    else:
-        st.info("La Gran Final aún no se ha jugado.")
-    if tercer_match and tercer_match["played"]:
-        st.markdown(f"🥉 Tercer lugar: {team_label_md(winner_of(tercer_match))}")
-
-    st.markdown("---")
-    st.subheader("🌟 Balón de Oro, Guante de Oro y Mejor Jugador Joven")
-    st.caption("Estos premios los define la mesa de presidentes (Mati, Jnka y Dibu). Quedan guardados para todos.")
-
-    # Sin bandera en las opciones del selectbox (no se pueden mostrar imágenes ahí).
-    all_players = ["-- Sin definir --"] + [f"{p['nombre']} ({t['name']})" for t in TEAMS.values() for p in t["squad"]]
-    awards = state.get("awards", {"balon_oro": "", "guante_oro": "", "joven": ""})
-
-    def idx_of(val):
-        return all_players.index(val) if val in all_players else 0
-
-    with st.form("form_awards"):
-        colA, colB, colC = st.columns(3)
-        balon = colA.selectbox("🎖️ Balón de Oro (mejor jugador)", all_players, index=idx_of(awards.get("balon_oro", "")))
-        guante = colB.selectbox("🧤 Guante de Oro (mejor arquero)", all_players, index=idx_of(awards.get("guante_oro", "")))
-        joven = colC.selectbox("🌱 Mejor Jugador Joven", all_players, index=idx_of(awards.get("joven", "")))
-        if st.form_submit_button("💾 Guardar premios"):
-            state["awards"] = {"balon_oro": balon, "guante_oro": guante, "joven": joven}
-            save_state(state)
-            st.success("Premios guardados ✅")
-            st.rerun()
-
-    if awards.get("balon_oro") or awards.get("guante_oro") or awards.get("joven"):
-        st.markdown("#### 🏅 Premios definidos")
-        if awards.get("balon_oro"):
-            st.write(f"🎖️ **Balón de Oro:** {awards['balon_oro']}")
-        if awards.get("guante_oro"):
-            st.write(f"🧤 **Guante de Oro:** {awards['guante_oro']}")
-        if awards.get("joven"):
-            st.write(f"🌱 **Mejor Jugador Joven:** {awards['joven']}")
 
 st.markdown("---")
 st.caption("FMMJ WORLD CUP UNITED 26 · Hecho con ❤️ por Mati, Jnka y Dibu · Streamlit App")
