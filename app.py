@@ -113,6 +113,34 @@ st.markdown(f"""
                   border-radius: 999px; transition: width 0.5s ease; }}
 
 .section-fade {{ animation: fadeInUp 0.5s ease; }}
+
+.flag-circle {{
+    width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
+    border: 2px solid rgba(255,255,255,0.18); box-shadow: 0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.35);
+    vertical-align: middle; transition: transform 0.15s ease;
+}}
+.flag-circle-sm {{
+    width: 24px; height: 24px; border-radius: 50%; object-fit: cover;
+    border: 1.5px solid rgba(255,255,255,0.18); box-shadow: 0 0 0 1.5px rgba(0,0,0,0.35);
+    vertical-align: middle;
+}}
+.standings-table {{ width: 100%; border-collapse: collapse; animation: fadeInUp 0.5s ease; }}
+.standings-table th {{
+    text-align: left; padding: 9px 10px; color: #9aa4b2; font-size: 0.74rem;
+    text-transform: uppercase; letter-spacing: 0.6px; border-bottom: 1px solid rgba(255,255,255,0.12);
+}}
+.standings-table td {{ padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,0.05); font-size: 0.92rem; }}
+.standings-table tr.qualified {{ background: linear-gradient(90deg, rgba(0,99,65,0.16), rgba(0,99,65,0.02)); }}
+.standings-table tr.qualified td:first-child {{ border-left: 3px solid {GREEN}; }}
+.standings-table tr:not(.qualified) td:first-child {{ border-left: 3px solid transparent; }}
+.standings-table tr:hover td {{ background: rgba(255,255,255,0.045); }}
+.standings-table td.team-cell {{ display:flex; align-items:center; gap:10px; }}
+.pos-badge {{
+    display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px;
+    border-radius:50%; font-size:0.75rem; font-weight:700; background: rgba(255,255,255,0.08); color:#cdd3da;
+}}
+.pos-badge.gold {{ background: #FFD70033; color:#FFD700; border:1px solid #FFD70066; }}
+.pos-badge.silver {{ background: #C7CBD133; color:#C7CBD1; border:1px solid #C7CBD166; }}
 </style>
 <div class="host-strip"><div style="background:{GREEN}"></div><div style="background:{BLUE}"></div><div style="background:{RED}"></div></div>
 """, unsafe_allow_html=True)
@@ -130,6 +158,12 @@ def flag_html(code, size="sm"):
 def flag_md(code):
     url = TEAMS[code]["flag_url"]
     return f'![{code}]({url})'
+
+
+def flag_circle(code, size="md"):
+    url = TEAMS[code]["flag_url"]
+    cls = "flag-circle" if size == "md" else "flag-circle-sm"
+    return f'<img src="{url}" class="{cls}">'
 
 
 # ---------------------------------------------------------------
@@ -193,7 +227,48 @@ def compute_standings(matches, group_letter):
             table[a]["PG"] += 1; table[a]["Pts"] += 3; table[h]["PP"] += 1
         else:
             table[h]["PE"] += 1; table[h]["Pts"] += 1; table[a]["PE"] += 1; table[a]["Pts"] += 1
-    return sorted(table.values(), key=lambda r: (r["Pts"], r["GF"] - r["GC"], r["GF"]), reverse=True)
+
+    def head_to_head_points(tied_codes):
+        """Mini-tabla (puntos, GF, GC) SOLO con los partidos jugados entre los
+        equipos empatados en puntos — se usa como primer criterio de desempate."""
+        mini = {c: {"Pts": 0, "GF": 0, "GC": 0} for c in tied_codes}
+        for m in matches:
+            if m["stage"] != "group" or m["group"] != group_letter or not m["played"]:
+                continue
+            h, a, hg, ag = m["home"], m["away"], m["home_goals"], m["away_goals"]
+            if h in tied_codes and a in tied_codes:
+                mini[h]["GF"] += hg; mini[h]["GC"] += ag
+                mini[a]["GF"] += ag; mini[a]["GC"] += hg
+                if hg > ag:
+                    mini[h]["Pts"] += 3
+                elif ag > hg:
+                    mini[a]["Pts"] += 3
+                else:
+                    mini[h]["Pts"] += 1; mini[a]["Pts"] += 1
+        return mini
+
+    # Orden de desempate (dentro de cada bloque de puntos iguales):
+    #   1) puntos en el duelo directo entre los empatados
+    #   2) diferencia de gol general
+    #   3) menos goles en contra (general)
+    #   4) más goles a favor (general)
+    rows = sorted(table.values(), key=lambda r: r["Pts"], reverse=True)
+    result, i = [], 0
+    while i < len(rows):
+        j = i
+        while j < len(rows) and rows[j]["Pts"] == rows[i]["Pts"]:
+            j += 1
+        block = rows[i:j]
+        if len(block) > 1:
+            mini = head_to_head_points({r["code"] for r in block})
+            block = sorted(
+                block,
+                key=lambda r: (mini[r["code"]]["Pts"], r["GF"] - r["GC"], -r["GC"], r["GF"]),
+                reverse=True,
+            )
+        result.extend(block)
+        i = j
+    return result
 
 
 def group_is_complete(matches, group_letter):
@@ -268,6 +343,33 @@ def label_pretty(matches, label):
         _, stage, slot = label.split("-")
         return f"Perdedor {STAGE_NAMES.get(stage, stage)} #{slot}"
     return label
+
+
+def render_standings_table(matches, group_letter):
+    standings = compute_standings(matches, group_letter)
+    header = """
+    <table class="standings-table">
+      <thead><tr>
+        <th>#</th><th>Selección</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th>
+        <th>GF</th><th>GC</th><th>DG</th><th>Pts</th>
+      </tr></thead><tbody>
+    """
+    rows_html = []
+    for i, r in enumerate(standings):
+        t = TEAMS[r["code"]]
+        qualified = i < 2
+        badge_cls = "gold" if i == 0 else ("silver" if i == 1 else "")
+        badge = f'<span class="pos-badge {badge_cls}">{i+1}</span>'
+        row_cls = "qualified" if qualified else ""
+        rows_html.append(f"""
+        <tr class="{row_cls}">
+            <td>{badge}</td>
+            <td class="team-cell">{flag_circle(r["code"])}<b>{t["name"]}</b></td>
+            <td>{r["PJ"]}</td><td>{r["PG"]}</td><td>{r["PE"]}</td><td>{r["PP"]}</td>
+            <td>{r["GF"]}</td><td>{r["GC"]}</td><td>{r["GF"] - r["GC"]}</td>
+            <td><b>{r["Pts"]}</b></td>
+        </tr>""")
+    st.markdown(header + "".join(rows_html) + "</tbody></table>", unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------
@@ -441,18 +543,9 @@ elif page == "🌍 Grupos y Tabla":
                                 f'<span style="opacity:0.7; font-size:0.85rem;">Presidente: {team["president"]}</span></div>', unsafe_allow_html=True)
             with colB:
                 st.markdown("**Tabla de posiciones**")
+                render_standings_table(matches, group_letter)
+                st.caption("Desempate: 1) duelo directo · 2) diferencia de gol · 3) menos goles en contra · 4) más goles a favor.")
                 standings = compute_standings(matches, group_letter)
-                rows = []
-                medals = ["🥇", "🥈", "", ""]
-                for i, r in enumerate(standings):
-                    t = TEAMS[r["code"]]
-                    rows.append({"": medals[i], "Bandera": t["flag_url"], "Selección": t["name"], "PJ": r["PJ"], "PG": r["PG"],
-                                "PE": r["PE"], "PP": r["PP"], "GF": r["GF"], "GC": r["GC"],
-                                "DG": r["GF"] - r["GC"], "Pts": r["Pts"]})
-                st.dataframe(
-                    rows, hide_index=True, width="stretch",
-                    column_config={"Bandera": st.column_config.ImageColumn("", width="small")},
-                )
                 if group_is_complete(matches, group_letter):
                     st.markdown(f"✅ Clasifican: {team_label_md(standings[0]['code'])} y {team_label_md(standings[1]['code'])}")
                 else:
