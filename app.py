@@ -346,14 +346,14 @@ def label_pretty(matches, label):
 
 
 def render_standings_table(matches, group_letter):
+    # OJO: st.markdown interpreta cualquier línea que empiece con 4+ espacios
+    # como bloque de código, así que todo el HTML se arma SIN indentación ni
+    # saltos de línea con sangría (todo en una sola línea por fila).
     standings = compute_standings(matches, group_letter)
-    header = """
-    <table class="standings-table">
-      <thead><tr>
-        <th>#</th><th>Selección</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th>
-        <th>GF</th><th>GC</th><th>DG</th><th>Pts</th>
-      </tr></thead><tbody>
-    """
+    header = ('<table class="standings-table"><thead><tr>'
+               '<th>#</th><th>Selección</th><th>PJ</th><th>PG</th><th>PE</th><th>PP</th>'
+               '<th>GF</th><th>GC</th><th>DG</th><th>Pts</th>'
+               '</tr></thead><tbody>')
     rows_html = []
     for i, r in enumerate(standings):
         t = TEAMS[r["code"]]
@@ -361,15 +361,17 @@ def render_standings_table(matches, group_letter):
         badge_cls = "gold" if i == 0 else ("silver" if i == 1 else "")
         badge = f'<span class="pos-badge {badge_cls}">{i+1}</span>'
         row_cls = "qualified" if qualified else ""
-        rows_html.append(f"""
-        <tr class="{row_cls}">
-            <td>{badge}</td>
-            <td class="team-cell">{flag_circle(r["code"])}<b>{t["name"]}</b></td>
-            <td>{r["PJ"]}</td><td>{r["PG"]}</td><td>{r["PE"]}</td><td>{r["PP"]}</td>
-            <td>{r["GF"]}</td><td>{r["GC"]}</td><td>{r["GF"] - r["GC"]}</td>
-            <td><b>{r["Pts"]}</b></td>
-        </tr>""")
-    st.markdown(header + "".join(rows_html) + "</tbody></table>", unsafe_allow_html=True)
+        rows_html.append(
+            f'<tr class="{row_cls}">'
+            f'<td>{badge}</td>'
+            f'<td class="team-cell">{flag_circle(r["code"])}<b>{t["name"]}</b></td>'
+            f'<td>{r["PJ"]}</td><td>{r["PG"]}</td><td>{r["PE"]}</td><td>{r["PP"]}</td>'
+            f'<td>{r["GF"]}</td><td>{r["GC"]}</td><td>{r["GF"] - r["GC"]}</td>'
+            f'<td><b>{r["Pts"]}</b></td>'
+            f'</tr>'
+        )
+    full_html = header + "".join(rows_html) + "</tbody></table>"
+    st.markdown(full_html, unsafe_allow_html=True)
 
 
 # ---------------------------------------------------------------
@@ -482,10 +484,11 @@ st.sidebar.caption(f"{total_jugados} / {total_matches} partidos jugados ({progre
 # INICIO
 # =================================================================
 if page == "🏠 Inicio":
-    st.markdown(f"""
-    <div class="wc-header"><h1>🏆 FMMJ WORLD CUP UNITED 26</h1>
-    <p>{flag_html('MEX')}México · {flag_html('USA')}Estados Unidos · {flag_html('CAN')}Canadá — Anfitriones del torneo</p></div>
-    """, unsafe_allow_html=True)
+    st.markdown(
+        f'<div class="wc-header"><h1>🏆 FMMJ WORLD CUP UNITED 26</h1>'
+        f'<p>{flag_html("MEX")}México · {flag_html("USA")}Estados Unidos · {flag_html("CAN")}Canadá — Anfitriones del torneo</p></div>',
+        unsafe_allow_html=True,
+    )
 
     m1, m2, m3 = st.columns(3)
     m1.metric("⚽ Partidos jugados", f"{total_jugados} / {total_matches}")
