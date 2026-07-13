@@ -6,7 +6,14 @@ import os
 from teams_data import TEAMS, GROUPS, HOSTS
 from matches_data import generate_initial_matches
 
-st.set_page_config(page_title="FMMJ WORLD CUP UNITED 26", page_icon="🏆", layout="wide")
+# --------------------------------------------------------------------
+# 👉 PON AQUÍ LA URL "RAW" DE TU LOGO SUBIDO A GITHUB (o una URL pública
+# cualquiera). Ejemplo si lo subes a tu repo:
+#   https://raw.githubusercontent.com/tu-usuario/tu-repo/main/logo.png
+# --------------------------------------------------------------------
+LOGO_URL = "https://raw.githubusercontent.com/tu-usuario/tu-repo/main/logo.png"
+
+st.set_page_config(page_title="FMMJ WORLD CUP UNITED 26", page_icon=LOGO_URL, layout="wide")
 
 STATE_PATH = "tournament_state.json"  # archivo plano en la raíz del repo (se autogenera si no existe)
 
@@ -462,6 +469,7 @@ def render_bracket(matches):
 # ---------------------------------------------------------------
 # SIDEBAR - NAVEGACIÓN
 # ---------------------------------------------------------------
+st.sidebar.image(LOGO_URL, width=90)
 st.sidebar.markdown("## 🏆 FMMJ WORLD CUP")
 st.sidebar.markdown("**UNITED 26**")
 st.sidebar.caption("Presidentes: Mati 🟢 · Jnka 🔵 · Dibu 🔴")
@@ -487,8 +495,10 @@ st.sidebar.caption(f"{total_jugados} / {total_matches} partidos jugados ({progre
 # =================================================================
 if page == "🏠 Inicio":
     st.markdown(
-        f'<div class="wc-header"><h1>🏆 FMMJ WORLD CUP UNITED 26</h1>'
-        f'<p>{flag_html("MEX")}México · {flag_html("USA")}Estados Unidos · {flag_html("CAN")}Canadá — Anfitriones del torneo</p></div>',
+        f'<div class="wc-header" style="display:flex; align-items:center; gap:18px;">'
+        f'<img src="{LOGO_URL}" style="width:64px; height:64px; object-fit:contain; filter: drop-shadow(0 2px 6px rgba(0,0,0,0.4));">'
+        f'<div><h1>🏆 FMMJ WORLD CUP UNITED 26</h1>'
+        f'<p>{flag_html("MEX")}México · {flag_html("USA")}Estados Unidos · {flag_html("CAN")}Canadá — Anfitriones del torneo</p></div></div>',
         unsafe_allow_html=True,
     )
 
@@ -665,4 +675,4 @@ elif page == "🏆 Eliminatorias":
                                     st.rerun()
 
 st.markdown("---")
-st.caption("FMMJ WORLD CUP UNITED 26 · Hecho con ❤️ por Mati, Jnka y Dibu · Streamlit App")
+st.caption("FMMJ WORLD CUP UNITED 26 · Football United the World")
