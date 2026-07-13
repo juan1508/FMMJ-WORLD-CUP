@@ -11,7 +11,7 @@ from matches_data import generate_initial_matches
 # cualquiera). Ejemplo si lo subes a tu repo:
 #   https://raw.githubusercontent.com/tu-usuario/tu-repo/main/logo.png
 # --------------------------------------------------------------------
-LOGO_URL = "https://github.com/juan1508/FMMJ-WORLD-CUP/blob/main/logo.png"
+LOGO_URL = "https://github.com/juan1508/FMMJ-WORLD-CUP/main/logo.png"
 
 st.set_page_config(page_title="FMMJ WORLD CUP UNITED 26", page_icon=LOGO_URL, layout="wide")
 
