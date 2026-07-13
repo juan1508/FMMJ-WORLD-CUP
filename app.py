@@ -115,14 +115,16 @@ st.markdown(f"""
 .section-fade {{ animation: fadeInUp 0.5s ease; }}
 
 .flag-circle {{
-    width: 34px; height: 34px; border-radius: 50%; object-fit: cover;
+    display: inline-block; width: 34px; height: 34px; border-radius: 50%;
+    background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important;
     border: 2px solid rgba(255,255,255,0.18); box-shadow: 0 0 0 2px rgba(0,0,0,0.35), 0 2px 6px rgba(0,0,0,0.35);
-    vertical-align: middle; transition: transform 0.15s ease;
+    vertical-align: middle; transition: transform 0.15s ease; flex-shrink: 0;
 }}
 .flag-circle-sm {{
-    width: 24px; height: 24px; border-radius: 50%; object-fit: cover;
+    display: inline-block; width: 24px; height: 24px; border-radius: 50%;
+    background-size: cover !important; background-position: center !important; background-repeat: no-repeat !important;
     border: 1.5px solid rgba(255,255,255,0.18); box-shadow: 0 0 0 1.5px rgba(0,0,0,0.35);
-    vertical-align: middle;
+    vertical-align: middle; flex-shrink: 0;
 }}
 .standings-table {{ width: 100%; border-collapse: collapse; animation: fadeInUp 0.5s ease; }}
 .standings-table th {{
@@ -163,7 +165,7 @@ def flag_md(code):
 def flag_circle(code, size="md"):
     url = TEAMS[code]["flag_url"]
     cls = "flag-circle" if size == "md" else "flag-circle-sm"
-    return f'<img src="{url}" class="{cls}">'
+    return f'<span class="{cls}" style="background-image:url(\'{url}\');"></span>'
 
 
 # ---------------------------------------------------------------
