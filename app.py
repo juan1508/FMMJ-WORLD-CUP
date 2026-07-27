@@ -43,7 +43,7 @@ STAGE_NAMES = {
 }
 
 # ---------------------------------------------------------------
-# CSS - ESTILO EXACTO DE BANDERAS (Icono circular en caja oscura)
+# CSS
 # ---------------------------------------------------------------
 st.markdown(f"""
 <style>
@@ -53,39 +53,6 @@ st.markdown(f"""
     background: linear-gradient(135deg, #020c1b 0%, #0a192f 50%, #020c1b 100%);
     color: {WHITE};
     font-family: 'Rajdhani', sans-serif;
-}}
-
-/* ESTILO DE BANDERA - Solo círculo con la bandera */
-.flag-icon-container {{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 10px;
-    vertical-align: middle;
-}}
-
-.flag-icon-container-sm {{
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-right: 8px;
-    vertical-align: middle;
-}}
-
-.flag-circle-inner {{
-    width: 48px;
-    height: 48px;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: center;
-}}
-
-.flag-circle-inner-sm {{
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    object-fit: cover;
-    object-position: center;
 }}
 
 .main-header {{
@@ -133,11 +100,15 @@ st.markdown(f"""
 # HELPERS
 # ---------------------------------------------------------------
 def flag_img(code, size="md"):
-    if code not in TEAMS: return "❓"
+    """Retorna HTML con bandera circular (solo círculo, sin fondo cuadrado)."""
+    if code not in TEAMS:
+        return "❓"
     url = TEAMS[code]["flag_url"]
-    c_cls = "flag-icon-container" if size == "md" else "flag-icon-container-sm"
-    i_cls = "flag-circle-inner" if size == "md" else "flag-circle-inner-sm"
-    return f'<div class="{c_cls}"><img src="{url}" class="{i_cls}"></div>'
+    if size == "md":
+        w = "48"
+    else:
+        w = "32"
+    return f'<img src="{url}" style="width:{w}px; height:{w}px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;">'
 
 def president_badge(president):
     color = PRESIDENTS_COLORS.get(president, "#666666")
@@ -318,6 +289,7 @@ elif page == "⚙️ Admin":
         m_list = [x for x in matches if x["stage"] == stage]
     
     for m in m_list:
+        # Resolver equipo local y visitante
         h = m["home_team"] if m["home_team"] else m["home"]
         a = m["away_team"] if m["away_team"] else m["away"]
         
@@ -334,29 +306,30 @@ elif page == "⚙️ Admin":
             hg = c1.number_input(f"Goles Local", 0, 20, m["home_goals"], key=f"admin_hg_{m['id']}")
             ag = c2.number_input(f"Goles Visita", 0, 20, m["away_goals"], key=f"admin_ag_{m['id']}")
             
-            # Registro de goleadores con claves únicas y seguras
-            # Usamos los equipos resueltos (home_team/away_team) que ya pueden ser códigos reales
+            # Registro de goleadores
             h_scorers = []
-            if hg > 0:
-                h_code = h if h in TEAMS else None
-                if h_code and h_code in TEAM_SQUADS:
-                    st.markdown(f"**Goleadores {TEAMS[h_code]['name']}**")
+            if hg > 0 and h in TEAMS:
+                squad = TEAM_SQUADS.get(h, [])
+                if len(squad) > 0:
+                    st.markdown(f"**Goleadores {TEAMS[h]['name']}**")
                     for i in range(int(hg)):
-                        p = st.selectbox(f"Goleador {i+1}", TEAM_SQUADS.get(h_code, []), key=f"p_h_{m['id']}_{i}")
+                        key = f"p_h_{m['id']}_{i}"
+                        p = st.selectbox(f"Goleador {i+1}", squad, key=key)
                         h_scorers.append(p)
-                elif h_code:
-                    st.warning(f"No hay plantilla definida para {TEAMS[h_code]['name']}")
+                else:
+                    st.warning(f"No hay jugadores en la plantilla de {TEAMS[h]['name']} (código: {h})")
             
             a_scorers = []
-            if ag > 0:
-                a_code = a if a in TEAMS else None
-                if a_code and a_code in TEAM_SQUADS:
-                    st.markdown(f"**Goleadores {TEAMS[a_code]['name']}**")
+            if ag > 0 and a in TEAMS:
+                squad = TEAM_SQUADS.get(a, [])
+                if len(squad) > 0:
+                    st.markdown(f"**Goleadores {TEAMS[a]['name']}**")
                     for i in range(int(ag)):
-                        p = st.selectbox(f"Goleador {i+1}", TEAM_SQUADS.get(a_code, []), key=f"p_a_{m['id']}_{i}")
+                        key = f"p_a_{m['id']}_{i}"
+                        p = st.selectbox(f"Goleador {i+1}", squad, key=key)
                         a_scorers.append(p)
-                elif a_code:
-                    st.warning(f"No hay plantilla definida para {TEAMS[a_code]['name']}")
+                else:
+                    st.warning(f"No hay jugadores en la plantilla de {TEAMS[a]['name']} (código: {a})")
             
             pen_h, pen_a = 0, 0
             if stage != "group" and hg == ag:
