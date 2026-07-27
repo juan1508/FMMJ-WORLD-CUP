@@ -55,17 +55,12 @@ st.markdown(f"""
     font-family: 'Rajdhani', sans-serif;
 }}
 
-/* ESTILO DE BANDERA SOLICITADO */
+/* ESTILO DE BANDERA - Solo círculo con la bandera */
 .flag-icon-container {{
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 48px;
-    height: 48px;
-    background-color: #1a1a1a; /* Fondo oscuro como la imagen */
-    border-radius: 12px;       /* Bordes redondeados del contenedor */
     margin-right: 10px;
-    box-shadow: inset 0 0 5px rgba(0,0,0,0.5), 0 2px 4px rgba(0,0,0,0.3);
     vertical-align: middle;
 }}
 
@@ -73,26 +68,21 @@ st.markdown(f"""
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    width: 36px;
-    height: 36px;
-    background-color: #1a1a1a;
-    border-radius: 8px;
     margin-right: 8px;
     vertical-align: middle;
 }}
 
 .flag-circle-inner {{
-    width: 38px;
-    height: 38px;
-    border-radius: 50%;    /* Círculo perfecto */
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
     object-fit: cover;
     object-position: center;
-    border: 1px solid rgba(255,255,255,0.1);
 }}
 
 .flag-circle-inner-sm {{
-    width: 28px;
-    height: 28px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
     object-fit: cover;
     object-position: center;
@@ -345,19 +335,28 @@ elif page == "⚙️ Admin":
             ag = c2.number_input(f"Goles Visita", 0, 20, m["away_goals"], key=f"admin_ag_{m['id']}")
             
             # Registro de goleadores con claves únicas y seguras
+            # Usamos los equipos resueltos (home_team/away_team) que ya pueden ser códigos reales
             h_scorers = []
-            if hg > 0 and h in TEAMS:
-                st.markdown(f"**Goleadores {TEAMS[h]['name']}**")
-                for i in range(int(hg)):
-                    p = st.selectbox(f"Goleador {i+1}", TEAM_SQUADS.get(h, []), key=f"p_h_{m['id']}_{i}")
-                    h_scorers.append(p)
+            if hg > 0:
+                h_code = h if h in TEAMS else None
+                if h_code and h_code in TEAM_SQUADS:
+                    st.markdown(f"**Goleadores {TEAMS[h_code]['name']}**")
+                    for i in range(int(hg)):
+                        p = st.selectbox(f"Goleador {i+1}", TEAM_SQUADS.get(h_code, []), key=f"p_h_{m['id']}_{i}")
+                        h_scorers.append(p)
+                elif h_code:
+                    st.warning(f"No hay plantilla definida para {TEAMS[h_code]['name']}")
             
             a_scorers = []
-            if ag > 0 and a in TEAMS:
-                st.markdown(f"**Goleadores {TEAMS[a]['name']}**")
-                for i in range(int(ag)):
-                    p = st.selectbox(f"Goleador {i+1}", TEAM_SQUADS.get(a, []), key=f"p_a_{m['id']}_{i}")
-                    a_scorers.append(p)
+            if ag > 0:
+                a_code = a if a in TEAMS else None
+                if a_code and a_code in TEAM_SQUADS:
+                    st.markdown(f"**Goleadores {TEAMS[a_code]['name']}**")
+                    for i in range(int(ag)):
+                        p = st.selectbox(f"Goleador {i+1}", TEAM_SQUADS.get(a_code, []), key=f"p_a_{m['id']}_{i}")
+                        a_scorers.append(p)
+                elif a_code:
+                    st.warning(f"No hay plantilla definida para {TEAMS[a_code]['name']}")
             
             pen_h, pen_a = 0, 0
             if stage != "group" and hg == ag:
