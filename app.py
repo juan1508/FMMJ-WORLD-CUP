@@ -9,24 +9,22 @@ from matches_data import generate_initial_matches
 from scorers_data import TEAM_SQUADS, initialize_scorers_state, add_goal, get_top_scorers
 
 # ---------------------------------------------------------------
-# CONFIGURACIÓN DEL LOGO LOCAL
+# CONFIGURACIÓN DEL LOGO LOCAL (dinámico, se recarga en cada rerun)
 # ---------------------------------------------------------------
-def get_base64_of_bin_file(bin_file):
-    if os.path.exists(bin_file):
-        with open(bin_file, 'rb') as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    return ""
+import time as _time
 
-def get_img_with_href(local_img_path):
-    img_format = os.path.splitext(local_img_path)[-1].replace('.', '')
-    bin_str = get_base64_of_bin_file(local_img_path)
-    if bin_str:
-        return f"data:image/{img_format};base64,{bin_str}"
+def _get_logo_base64(logo_path="logo.png"):
+    """Lee el archivo logo.png en cada ejecución para que se actualice sin reboot."""
+    if os.path.exists(logo_path):
+        with open(logo_path, 'rb') as f:
+            data = f.read()
+        timestamp = int(_time.time())  # cache-buster
+        img_format = os.path.splitext(logo_path)[-1].replace('.', '')
+        return f"data:image/{img_format};base64,{base64.b64encode(data).decode()}?t={timestamp}"
     return ""
 
 LOGO_PATH = "logo.png"
-LOGO_BASE64 = get_img_with_href(LOGO_PATH)
+LOGO_BASE64 = _get_logo_base64(LOGO_PATH)
 
 st.set_page_config(page_title="FMMJ WORLD CUP UNITED 26", page_icon=LOGO_PATH, layout="wide")
 
@@ -354,5 +352,5 @@ elif page == "⚙️ Admin":
                 st.rerun()
 
 st.sidebar.markdown("---")
-st.sidebar.image(LOGO_BASE64)
+st.sidebar.image(LOGO_BASE64, use_column_width=True)
 st.sidebar.caption("FMMJ WORLD CUP UNITED 26")
