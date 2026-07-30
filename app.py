@@ -3,27 +3,15 @@ import streamlit as st
 import json
 import os
 import base64
-import time as _time
 
 from teams_data import TEAMS, GROUPS, HOSTS
 from matches_data import generate_initial_matches
 from scorers_data import TEAM_SQUADS, initialize_scorers_state, add_goal, get_top_scorers
 
 # ---------------------------------------------------------------
-# LOGO DINÁMICO (se recarga en cada rerun, sin reboot)
+# LOGO: se carga con st.image() nativo (sin limitaciones de tamaño)
 # ---------------------------------------------------------------
-def _get_logo_base64(logo_path="logo.png"):
-    """Lee el archivo logo.png en cada ejecución para que se actualice sin reboot."""
-    if os.path.exists(logo_path):
-        with open(logo_path, 'rb') as f:
-            data = f.read()
-        timestamp = int(_time.time())  # cache-buster
-        img_format = os.path.splitext(logo_path)[-1].replace('.', '')
-        return f"data:image/{img_format};base64,{base64.b64encode(data).decode()}?t={timestamp}"
-    return ""
-
 LOGO_PATH = "logo.png"
-LOGO_BASE64 = _get_logo_base64(LOGO_PATH)
 
 st.set_page_config(page_title="FMMJ WORLD CUP UNITED 26", page_icon=LOGO_PATH, layout="wide")
 
@@ -62,35 +50,13 @@ st.markdown(f"""
     background: linear-gradient(135deg, rgba(10,10,26,0.95) 0%, rgba(26,10,46,0.9) 50%, rgba(10,10,26,0.95) 100%);
     border-bottom: 3px solid transparent;
     border-image: linear-gradient(90deg, {CYAN}, {GOLD}, {CYAN}) 1;
-    padding: 25px 20px;
+    padding: 20px;
     text-align: center;
     backdrop-filter: blur(20px);
     margin-bottom: 25px;
     border-radius: 0 0 25px 25px;
     position: relative;
     overflow: hidden;
-}}
-.main-header::before {{
-    content: '';
-    position: absolute;
-    top: 0; left: -50%;
-    width: 200%; height: 100%;
-    background: linear-gradient(90deg, transparent, rgba(0,229,255,0.05), transparent);
-    animation: shimmer 4s infinite;
-}}
-@keyframes shimmer {{
-    0% {{ transform: translateX(-50%); }}
-    100% {{ transform: translateX(50%); }}
-}}
-
-.logo-img {{ 
-    width: 160px; 
-    filter: drop-shadow(0 0 15px {CYAN}) drop-shadow(0 0 30px rgba(123,47,190,0.3));
-    animation: float 3s ease-in-out infinite;
-}}
-@keyframes float {{
-    0%, 100% {{ transform: translateY(0px); }}
-    50% {{ transform: translateY(-5px); }}
 }}
 
 .tournament-title {{ 
@@ -101,9 +67,9 @@ st.markdown(f"""
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
-    font-size: 2.8rem; 
+    font-size: 2.5rem; 
     letter-spacing: 6px;
-    margin: 10px 0 5px 0;
+    margin: 8px 0 5px 0;
     text-shadow: none;
 }}
 
@@ -126,10 +92,6 @@ st.markdown(f"""
     transition: all 0.3s ease;
     position: relative;
     overflow: hidden;
-}}
-.match-card:hover {{
-    border-color: rgba(0,229,255,0.4);
-    box-shadow: 0 5px 25px rgba(0,229,255,0.1);
 }}
 .match-card::after {{
     content: '';
@@ -249,14 +211,6 @@ st.markdown(f"""
     position: relative;
     overflow: hidden;
 }}
-.welcome-card::before {{
-    content: '';
-    position: absolute;
-    top: 0; left: 0;
-    width: 100%; height: 100%;
-    background: radial-gradient(ellipse at top right, rgba(123,47,190,0.1), transparent 70%);
-    pointer-events: none;
-}}
 
 /* === SCROLLBAR === */
 ::-webkit-scrollbar {{
@@ -272,11 +226,16 @@ st.markdown(f"""
 </style>
 
 <div class="main-header">
-    <img src="{LOGO_BASE64}" class="logo-img">
     <div class="tournament-title">FMMJ WORLD CUP</div>
     <p class="subtitle">UNITED 2026 &bull; EL LEGADO DE LOS PRIMOS</p>
 </div>
 """, unsafe_allow_html=True)
+
+# Logo con st.image() nativo (no tiene limitaciones de tamaño)
+if os.path.exists(LOGO_PATH):
+    col_logo_left, col_logo_img, col_logo_right = st.columns([3, 1, 3])
+    with col_logo_img:
+        st.image(LOGO_PATH, width=180)
 
 # ---------------------------------------------------------------
 # HELPERS
@@ -624,10 +583,9 @@ elif page == "⚙️ Admin":
 # SIDEBAR LOGO
 # ---------------------------------------------------------------
 st.sidebar.markdown("---")
-if LOGO_BASE64:
-    st.sidebar.image(LOGO_BASE64, width=250)
-    st.sidebar.markdown(f"""
-    <div style='text-align:center; color:{GOLD}; font-family:Orbitron,sans-serif; font-size:0.75rem; letter-spacing:1px;'>
-        FMMJ WORLD CUP UNITED 26
-    </div>
-    """, unsafe_allow_html=True)
+st.sidebar.image(LOGO_PATH, width=200)
+st.sidebar.markdown(f"""
+<div style='text-align:center; color:{GOLD}; font-family:Orbitron,sans-serif; font-size:0.75rem; letter-spacing:1px;'>
+    FMMJ WORLD CUP UNITED 26
+</div>
+""", unsafe_allow_html=True)
