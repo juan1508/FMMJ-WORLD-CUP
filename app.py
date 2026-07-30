@@ -223,12 +223,155 @@ st.markdown(f"""
     background: linear-gradient(180deg, {CYAN}, {GOLD});
     border-radius: 3px;
 }}
-</style>
 
-<div class="main-header">
-    <div class="tournament-title">FMMJ WORLD CUP</div>
-    <p class="subtitle">UNITED 2026 &bull; EL LEGADO DE LOS PRIMOS</p>
-</div>
+/* === BRACKET STYLES === */
+.bracket-container {{
+    display: flex;
+    overflow-x: auto;
+    padding: 30px 20px;
+    gap: 0;
+    align-items: stretch;
+    min-height: 900px;
+    position: relative;
+}}
+.bracket-column {{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-around;
+    min-width: 220px;
+    position: relative;
+    padding: 0 20px;
+}}
+.bracket-column-title {{
+    text-align: center;
+    font-family: 'Orbitron', sans-serif;
+    color: {GOLD};
+    font-size: 0.75rem;
+    letter-spacing: 2px;
+    margin-bottom: 15px;
+    text-transform: uppercase;
+    padding: 8px 12px;
+    background: linear-gradient(135deg, rgba(0,229,255,0.1), rgba(123,47,190,0.1));
+    border-radius: 8px;
+    border: 1px solid rgba(0,229,255,0.2);
+}}
+.bracket-match {{
+    background: rgba(10, 15, 30, 0.95);
+    border: 1px solid rgba(0,229,255,0.25);
+    border-radius: 10px;
+    padding: 0;
+    margin: 6px 0;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 0 15px rgba(0,229,255,0.05);
+    transition: all 0.3s ease;
+}}
+.bracket-match:hover {{
+    border-color: rgba(0,229,255,0.5);
+    box-shadow: 0 0 25px rgba(0,229,255,0.1);
+}}
+.bracket-match::before {{
+    content: '';
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%; height: 2px;
+    background: linear-gradient(90deg, {CYAN}, {GOLD});
+    opacity: 0.6;
+}}
+.bracket-team-row {{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 12px;
+    transition: all 0.2s ease;
+}}
+.bracket-team-row:hover {{
+    background: rgba(0,229,255,0.05);
+}}
+.bracket-team-row.winner {{
+    background: rgba(0,229,255,0.08);
+}}
+.bracket-team-row.loser {{
+    opacity: 0.5;
+}}
+.bracket-team-name {{
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: rgba(255,255,255,0.9);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}}
+.bracket-team-name.unknown {{
+    color: rgba(255,255,255,0.35);
+    font-style: italic;
+}}
+.bracket-score {{
+    font-family: 'Orbitron', sans-serif;
+    font-weight: 700;
+    font-size: 1rem;
+    color: {GOLD};
+    min-width: 20px;
+    text-align: center;
+}}
+.bracket-score.pending {{
+    color: rgba(255,255,255,0.25);
+}}
+.bracket-divider {{
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(0,229,255,0.2), transparent);
+    margin: 0;
+}}
+.bracket-match-label {{
+    text-align: center;
+    font-size: 0.6rem;
+    color: rgba(255,255,255,0.3);
+    padding: 4px 0 2px 0;
+    font-family: 'Inter', sans-serif;
+    letter-spacing: 1px;
+}}
+
+/* Third Place Column */
+.bracket-column-third {{
+    min-width: 220px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 20px;
+}}
+
+/* Final Column */
+.bracket-column-final {{
+    min-width: 240px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 0 20px;
+}}
+.bracket-champion {{
+    background: linear-gradient(135deg, rgba(201,162,75,0.2), rgba(0,229,255,0.1));
+    border: 2px solid {GOLD};
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    margin-top: 15px;
+    box-shadow: 0 0 30px rgba(201,162,75,0.15);
+}}
+.bracket-champion-title {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 0.65rem;
+    color: {GOLD};
+    letter-spacing: 2px;
+    margin-bottom: 8px;
+}}
+.bracket-champion-name {{
+    font-family: 'Orbitron', sans-serif;
+    font-size: 1.1rem;
+    font-weight: 900;
+    color: {GOLD};
+    text-shadow: 0 0 15px rgba(201,162,75,0.4);
+}}
+</style>
 """, unsafe_allow_html=True)
 
 # Logo con st.image() nativo (no tiene limitaciones de tamaño)
@@ -324,6 +467,175 @@ def annotate_knockout(matches):
             m["away_team"] = resolve_label(matches, m["away"])
     return matches
 
+def get_winner(match):
+    """Retorna el ganador de un partido (team_code o None)."""
+    if not match["played"]:
+        return None
+    if match["home_goals"] > match["away_goals"]:
+        return match["home_team"]
+    elif match["away_goals"] > match["home_goals"]:
+        return match["away_team"]
+    else:
+        # Penales
+        if match.get("pen_home") is not None and match.get("pen_away") is not None:
+            if match["pen_home"] > match["pen_away"]:
+                return match["home_team"]
+            elif match["pen_away"] > match["pen_home"]:
+                return match["away_team"]
+        return None
+
+def get_loser(match):
+    """Retorna el perdedor de un partido (team_code o None)."""
+    if not match["played"]:
+        return None
+    winner = get_winner(match)
+    if winner is None:
+        return None
+    if winner == match["home_team"]:
+        return match["away_team"]
+    return match["home_team"]
+
+def team_display_name(code):
+    if code and code in TEAMS:
+        return TEAMS[code]["name"]
+    return "Por definir..."
+
+def bracket_match_html(match, label=""):
+    """Genera HTML para un partido del bracket."""
+    h = match["home_team"]
+    a = match["away_team"]
+    h_name = team_display_name(h)
+    a_name = team_display_name(a)
+    
+    h_known = h is not None and h in TEAMS
+    a_known = a is not None and a in TEAMS
+    
+    h_class = ""
+    a_class = ""
+    h_score_class = ""
+    a_score_class = ""
+    
+    if match["played"]:
+        winner = get_winner(match)
+        if winner == h:
+            h_class = "winner"
+            a_class = "loser"
+        elif winner == a:
+            a_class = "winner"
+            h_class = "loser"
+    
+    if match["played"]:
+        h_score_str = str(match["home_goals"])
+        a_score_str = str(match["away_goals"])
+    else:
+        h_score_str = "-"
+        a_score_str = "-"
+        h_score_class = "pending"
+        a_score_class = "pending"
+    
+    h_flag = flag_img(h, 'sm') if h_known else ""
+    a_flag = flag_img(a, 'sm') if a_known else ""
+    
+    name_class = "" if h_known else "unknown"
+    name_class2 = "" if a_known else "unknown"
+    
+    status = "✓" if match["played"] else "⏳"
+    
+    html = f"""
+    <div class="bracket-match">
+        <div class="bracket-match-label">{label} {status}</div>
+        <div class="bracket-team-row {h_class}">
+            <div class="bracket-team-name {name_class}">{h_flag if h_known else '<span style="opacity:0.4">?</span>'} {h_name}</div>
+            <div class="bracket-score {h_score_class}">{h_score_str}</div>
+        </div>
+        <div class="bracket-divider"></div>
+        <div class="bracket-team-row {a_class}">
+            <div class="bracket-team-name {name_class2}">{a_flag if a_known else '<span style="opacity:0.4">?</span>'} {a_name}</div>
+            <div class="bracket-score {a_score_class}">{a_score_str}</div>
+        </div>
+    </div>
+    """
+    return html
+
+
+def generate_bracket_html(matches):
+    """Genera el HTML completo del bracket visual."""
+    
+    r16_matches = [m for m in matches if m["stage"] == "r16"]
+    qf_matches = [m for m in matches if m["stage"] == "qf"]
+    sf_matches = [m for m in matches if m["stage"] == "sf"]
+    final_match = next((m for m in matches if m["stage"] == "final"), None)
+    third_match = next((m for m in matches if m["stage"] == "3rd"), None)
+    
+    # Calcular ganadores para mostrar campeón
+    champion = None
+    third_winner = None
+    if final_match and final_match["played"]:
+        champion = get_winner(final_match)
+    if third_match and third_match["played"]:
+        third_winner = get_winner(third_match)
+    
+    html = """
+    <div class="bracket-container">
+    """
+    
+    # Columna Octavos (8 partidos)
+    html += '<div class="bracket-column">'
+    html += '<div class="bracket-column-title">🔥 OCTAVOS DE FINAL</div>'
+    for i, m in enumerate(r16_matches):
+        html += bracket_match_html(m, f"MATCH {i+1}")
+    html += '</div>'
+    
+    # Columna Cuartos (4 partidos)
+    html += '<div class="bracket-column">'
+    html += '<div class="bracket-column-title">⚡ CUARTOS DE FINAL</div>'
+    for i, m in enumerate(qf_matches):
+        html += bracket_match_html(m, f"CF {i+1}")
+    html += '</div>'
+    
+    # Columna Semifinales (2 partidos)
+    html += '<div class="bracket-column">'
+    html += '<div class="bracket-column-title">🏆 SEMIFINALES</div>'
+    for i, m in enumerate(sf_matches):
+        html += bracket_match_html(m, f"SF {i+1}")
+    html += '</div>'
+    
+    # Columna Tercer Puesto
+    html += '<div class="bracket-column-third">'
+    html += '<div class="bracket-column-title">🥉 TERCER PUESTO</div>'
+    if third_match:
+        html += bracket_match_html(third_match, "3rd")
+    if third_winner:
+        w_name = team_display_name(third_winner)
+        w_flag = flag_img(third_winner, 'sm') if third_winner in TEAMS else ""
+        html += f"""
+        <div class="bracket-champion" style="border-color:{CYAN};">
+            <div class="bracket-champion-title" style="color:{CYAN};">TERCER LUGAR</div>
+            <div class="bracket-champion-name" style="color:{CYAN}; font-size:0.9rem;">{w_flag} {w_name}</div>
+        </div>
+        """
+    html += '</div>'
+    
+    # Columna Final
+    html += '<div class="bracket-column-final">'
+    html += '<div class="bracket-column-title">👑 GRAN FINAL</div>'
+    if final_match:
+        html += bracket_match_html(final_match, "FINAL")
+    if champion:
+        c_name = team_display_name(champion)
+        c_flag = flag_img(champion, 'sm') if champion in TEAMS else ""
+        html += f"""
+        <div class="bracket-champion">
+            <div class="bracket-champion-title">🏆 CAMPEÓN FMMJ WORLD CUP 🏆</div>
+            <div class="bracket-champion-name">{c_flag} {c_name}</div>
+        </div>
+        """
+    html += '</div>'
+    
+    html += '</div>'
+    return html
+
+
 # ---------------------------------------------------------------
 # APP PRINCIPAL
 # ---------------------------------------------------------------
@@ -405,7 +717,7 @@ elif page == "📊 Grupos y Tablas":
                         <td>{r['PP']}</td>
                         <td>{r['GF']}</td>
                         <td>{r['GC']}</td>
-                        <td><b>{dg_display}</b></td>
+                        <td>{dg_display}</td>
                         <td><b style='color:{GOLD};'>{r['Pts']}</b></td>
                     </tr>"""
                 html += "</table>"
@@ -435,39 +747,66 @@ elif page == "📊 Grupos y Tablas":
                     """, unsafe_allow_html=True)
 
 elif page == "🏆 Fase Final":
+    # Mostrar progreso del torneo
+    groups_complete = sum(1 for g in GROUPS.keys() 
+                         if all(m["played"] for m in matches if m["stage"] == "group" and m["group"] == g))
+    r16_played = sum(1 for m in matches if m["stage"] == "r16" and m["played"])
+    qf_played = sum(1 for m in matches if m["stage"] == "qf" and m["played"])
+    sf_played = sum(1 for m in matches if m["stage"] == "sf" and m["played"])
+    final_played = sum(1 for m in matches if m["stage"] == "final" and m["played"])
+    third_played = sum(1 for m in matches if m["stage"] == "3rd" and m["played"])
+    
+    st.markdown(f"""
+    <div style='text-align:center; margin-bottom:20px;'>
+        <h2 style='color:{GOLD}; font-family:Orbitron,sans-serif; font-size:1.8rem; letter-spacing:3px;'>
+            🏆 FASE ELIMINATORIA 🏆
+        </h2>
+        <p style='color:rgba(255,255,255,0.5); font-size:0.9rem;'>
+            Grupos completos: {groups_complete}/8 &bull; Octavos: {r16_played}/8 &bull; Cuartos: {qf_played}/4 &bull; Semis: {sf_played}/2 &bull; Final: {final_played}/1
+        </p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Bracket visual completo
+    bracket_html = generate_bracket_html(matches)
+    st.markdown(bracket_html, unsafe_allow_html=True)
+    
+    # Detalle de cada partido como expander
+    st.markdown(f"""
+    <h3 style='color:{CYAN}; font-family:Orbitron,sans-serif; letter-spacing:2px; margin-top:30px;'>
+        📋 DETALLE DE PARTIDOS
+    </h3>
+    """, unsafe_allow_html=True)
+    
     for s in STAGES_KO:
         st.markdown(f"""
         <div class='stage-section'>
-            <h3 class='stage-title'>{STAGE_NAMES[s].upper()}</h3>
+            <h4 class='stage-title' style='font-size:1.1rem;'>{STAGE_NAMES[s].upper()}</h4>
         </div>
         """, unsafe_allow_html=True)
         s_matches = [x for x in matches if x["stage"] == s]
-        cols = st.columns(len(s_matches)) if s_matches else [st.container()]
-        for idx, m in enumerate(s_matches):
-            with cols[idx]:
-                h = m["home_team"] if m["home_team"] else m["home"]
-                a = m["away_team"] if m["away_team"] else m["away"]
-                h_name = TEAMS[h]["name"] if h in TEAMS else h
-                a_name = TEAMS[a]["name"] if a in TEAMS else a
-                h_flag = flag_img(h, 'sm') if h in TEAMS else '❓'
-                a_flag = flag_img(a, 'sm') if a in TEAMS else '❓'
-                played = "✓" if m["played"] else "⏳"
-                pen_str = ""
-                if m.get("pen_home") is not None:
-                    pen_str = f"<div style='font-size:0.7rem; color:{CYAN};'>Penales: {m['pen_home']} - {m['pen_away']}</div>"
+        for m in s_matches:
+            h = m["home_team"] if m["home_team"] else m["home"]
+            a = m["away_team"] if m["away_team"] else m["away"]
+            h_name = TEAMS[h]["name"] if h in TEAMS else "Por definir..."
+            a_name = TEAMS[a]["name"] if a in TEAMS else "Por definir..."
+            
+            with st.expander(f"⚽ {h_name} vs {a_name} ({'✓ Jugado' if m['played'] else '⏳ Pendiente'})", expanded=False):
+                h_resolved = h in TEAMS if h else False
+                a_resolved = a in TEAMS if a else False
                 st.markdown(f"""
-                <div class='match-card'>
-                    <div style='text-align:center; font-size:0.75rem; opacity:0.5; margin-bottom:8px;'>Partido {m['slot']} {played}</div>
-                    <div style='display:flex; justify-content:space-between; align-items:center; margin:8px 0;'>
-                        <div>{h_flag}<span style='font-weight:600;'>{h_name}</span></div>
-                        <b style='color:{GOLD}; font-family:Orbitron,sans-serif; font-size:1.2rem;'>{m['home_goals'] if m['played'] else '-'}</b>
+                <div style='display:flex; justify-content:space-between; align-items:center; padding:10px; background:rgba(0,0,0,0.3); border-radius:10px; margin-bottom:10px;'>
+                    <div style='text-align:center;'>
+                        {flag_img(h, 'md') if h_resolved else '❓'}
+                        <br><b>{h_name}</b>
                     </div>
-                    <hr style='border-color:rgba(255,255,255,0.05);'>
-                    <div style='display:flex; justify-content:space-between; align-items:center; margin:8px 0;'>
-                        <div>{a_flag}<span style='font-weight:600;'>{a_name}</span></div>
-                        <b style='color:{GOLD}; font-family:Orbitron,sans-serif; font-size:1.2rem;'>{m['away_goals'] if m['played'] else '-'}</b>
+                    <div class='score-display'>
+                        {'{m[home_goals]} - {m[away_goals]}'.format(**m) if m['played'] else 'VS'}
                     </div>
-                    {pen_str}
+                    <div style='text-align:center;'>
+                        {flag_img(a, 'md') if a_resolved else '❓'}
+                        <br><b>{a_name}</b>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
 
