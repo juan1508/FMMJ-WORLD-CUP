@@ -422,6 +422,28 @@ def team_label_md(code):
 # ---------------------------------------------------------------
 # LÓGICA DE TORNEO
 # ---------------------------------------------------------------
+def _head_to_head(points, team_a, team_b, matches, group_letter):
+    """Calcula los puntos de team_a frente a team_b en sus enfrentamientos directos dentro del grupo.
+    Devuelve una terna (puntos_a, dg_a, gf_a) para usar como criterio de desempate."""
+    pts_a, dg_a, gf_a = 0, 0, 0
+    for m in matches:
+        if m["stage"] != "group" or m["group"] != group_letter or not m["played"]:
+            continue
+        h, a, hg, ag = m["home"], m["away"], m["home_goals"], m["away_goals"]
+        # Enfrentamiento entre team_a y team_b
+        if (h == team_a and a == team_b) or (h == team_b and a == team_a):
+            if h == team_a:
+                gf_a += hg; gf_a_opponent = ag
+            else:
+                gf_a += ag; gf_a_opponent = hg
+            dg_a += gf_a_opponent - gf_a if h == team_a else gf_a - gf_a_opponent
+            if hg == ag:
+                pts_a += 1
+            elif (h == team_a and hg > ag) or (a == team_a and ag > hg):
+                pts_a += 3
+    return (pts_a, dg_a, gf_a)
+
+
 def compute_standings(matches, group_letter):
     codes = [t["code"] for t in GROUPS[group_letter]]
     table = {c: {"code": c, "PJ": 0, "PG": 0, "PE": 0, "PP": 0, "GF": 0, "GC": 0, "Pts": 0} for c in codes}
@@ -438,7 +460,53 @@ def compute_standings(matches, group_letter):
             table[a]["PG"] += 1; table[a]["Pts"] += 3; table[h]["PP"] += 1
         else:
             table[h]["PE"] += 1; table[h]["Pts"] += 1; table[a]["PE"] += 1; table[a]["Pts"] += 1
-    return sorted(table.values(), key=lambda r: (r["Pts"], r["GF"] - r["GC"], r["GF"]), reverse=True)
+
+    # Ordenamiento con criterios de desempate:
+    # 1. Puntos (más)
+    # 2. Enfrentamiento directo (puntos H2H, luego DG H2H, luego GF H2H)
+    # 3. Diferencia de goles (más)
+    # 4. Goles en contra (menos)
+    # 5. Goles a favor (más)
+    rows = list(table.values())
+    rows.sort(key=lambda r: (
+        r["Pts"],
+        _head_to_head(points=None, team_a=r["code"], team_b="__all__", matches=matches, group_letter=group_letter)[0],
+        r["GF"] - r["GC"],
+        -r["GC"],   # negativos para que menos GC quede primero
+        r["GF"],
+    ), reverse=True)
+
+    # El criterio H2H real necesita compararse entre pares. Usamos un enfoque de ordenamiento
+    # con cmp que compara cada par usando _head_to_head directo.
+    from functools import cmp_to_key
+
+    def _compare(a, b):
+        # Criterio 1: Puntos
+        if a["Pts"] != b["Pts"]:
+            return 1 if a["Pts"] > b["Pts"] else -1
+        # Criterio 2: Enfrentamiento directo (solo si hubo ganador claro)
+        h2h = _head_to_head(points=None, team_a=a["code"], team_b=b["code"], matches=matches, group_letter=group_letter)
+        # h2h[0] = puntos de A en el H2H: 3=ganó, 0=perdió, 1=empató
+        if h2h[0] == 3:
+            return 1  # A ganó el H2H → A es mejor
+        elif h2h[0] == 0:
+            return -1  # A perdió el H2H → B es mejor
+        # Si empataron el H2H (h2h[0]==1), no desempata → seguir
+        # Criterio 3: Diferencia de goles global
+        dg_a = a["GF"] - a["GC"]
+        dg_b = b["GF"] - b["GC"]
+        if dg_a != dg_b:
+            return 1 if dg_a > dg_b else -1
+        # Criterio 4: Goles en contra (menos es mejor)
+        if a["GC"] != b["GC"]:
+            return 1 if a["GC"] < b["GC"] else -1
+        # Criterio 5: Goles a favor (más es mejor)
+        if a["GF"] != b["GF"]:
+            return 1 if a["GF"] > b["GF"] else -1
+        return 0
+
+    rows.sort(key=cmp_to_key(_compare), reverse=True)
+    return rows
 
 def get_qualifier(matches, group_letter, position):
     complete = all(m["played"] for m in matches if m["stage"] == "group" and m["group"] == group_letter)
